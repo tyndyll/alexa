@@ -45,7 +45,7 @@ type FlashBriefing struct {
 
 // MarshalJSON is a convenience function which manipulates the FlashBriefing into the JSON format expected by Alexa
 func (briefing *FlashBriefing) MarshalJSON() ([]byte, error) {
-	var interfaceSlice []interface{} = make([]interface{}, len(briefing.Items))
+	var interfaceSlice = make([]interface{}, len(briefing.Items))
 	for i, item := range briefing.Items {
 		interfaceSlice[i] = item
 	}

@@ -12,33 +12,32 @@ import (
 )
 
 const (
-	demo_uid         = "urn:uuid:1335c695-cfb8-4ebb-abbd-80da344efa6b"
-	demo_date        = "2016-05-23T22:34:51Z"
-	demo_title       = "Amazon Developer Blog, week in review May 23rd"
-	demo_text        = "Main information for the item"
-	demo_stream      = "https://developer.amazon.com/public/community/blog/myaudiofile.mp3"
-	demo_redirection = "https://developer.amazon.com/public/community/blog"
+	demoUID         = "urn:uuid:1335c695-cfb8-4ebb-abbd-80da344efa6b"
+	demoDate        = "2016-05-23T22:34:51Z"
+	demoTitle       = "Amazon Developer Blog, week in review May 23rd"
+	demoText        = "Main information for the item"
+	demoStream      = "https://developer.amazon.com/public/community/blog/myaudiofile.mp3"
+	demoRedirection = "https://developer.amazon.com/public/community/blog"
 
-	demo_json = `{"uid":"%s","updateDate":"%s","titleText":"%s","mainText":"%s","streamUrl":"%s","redirectionUrl":"%s"}`
+	demoJSON = `{"uid":"%s","updateDate":"%s","titleText":"%s","mainText":"%s","streamUrl":"%s","redirectionUrl":"%s"}`
 )
 
-var expected_json = fmt.Sprintf(demo_json, demo_uid, demo_date, demo_title, demo_text,
-	demo_stream, demo_redirection)
+var expectedJSON = fmt.Sprintf(demoJSON, demoUID, demoDate, demoTitle, demoText, demoStream, demoRedirection)
 
 func TestFlashBriefingItem_MarshalJSON(t *testing.T) {
 	Convey(`Given I have a FlashBriefingItem`, t, func() {
-		date, err := time.Parse(time.RFC3339, demo_date)
+		date, err := time.Parse(time.RFC3339, demoDate)
 		if err != nil {
 			panic(err)
 		}
 
 		item := &FlashBriefingItem{
-			ID:         demo_uid,
+			ID:         demoUID,
 			Date:       date,
-			Title:      demo_title,
-			Text:       demo_text,
-			AudioURL:   demo_stream,
-			DisplayURL: demo_redirection,
+			Title:      demoTitle,
+			Text:       demoText,
+			AudioURL:   demoStream,
+			DisplayURL: demoRedirection,
 		}
 
 		Convey(`When I marshal the item to JSON`, func() {
@@ -49,27 +48,26 @@ func TestFlashBriefingItem_MarshalJSON(t *testing.T) {
 			})
 
 			Convey(`Then the correct json will be produced`, func() {
-				So(string(data), ShouldEqual, expected_json)
+				So(string(data), ShouldEqual, expectedJSON)
 			})
 		})
 	})
-
 }
 
 func TestFlashBriefing_MarshalJSON(t *testing.T) {
 	Convey(`Given I have a FlashBriefingItem`, t, func() {
-		date, err := time.Parse(time.RFC3339, demo_date)
+		date, err := time.Parse(time.RFC3339, demoDate)
 		if err != nil {
 			panic(err)
 		}
 
 		item := &FlashBriefingItem{
-			ID:         demo_uid,
+			ID:         demoUID,
 			Date:       date,
-			Title:      demo_title,
-			Text:       demo_text,
-			AudioURL:   demo_stream,
-			DisplayURL: demo_redirection,
+			Title:      demoTitle,
+			Text:       demoText,
+			AudioURL:   demoStream,
+			DisplayURL: demoRedirection,
 		}
 
 		Convey(`And I populate a FlashBriefing with that item`, func() {
@@ -88,10 +86,8 @@ func TestFlashBriefing_MarshalJSON(t *testing.T) {
 				})
 
 				Convey(`Then the correct json will be produced`, func() {
-					expected_item := fmt.Sprintf(demo_json, demo_uid, demo_date, demo_title, demo_text,
-						demo_stream, demo_redirection)
-					expected_json := fmt.Sprintf(`[%s,%s]`, expected_item, expected_item)
-					So(string(data), ShouldEqual, expected_json)
+					expectedBriefing := fmt.Sprintf(`[%s,%s]`, expectedJSON, expectedJSON)
+					So(string(data), ShouldEqual, expectedBriefing)
 				})
 			})
 		})
@@ -100,18 +96,18 @@ func TestFlashBriefing_MarshalJSON(t *testing.T) {
 
 func TestServeFlashBriefing(t *testing.T) {
 	Convey(`Given I have a FlashBriefingItem`, t, func() {
-		date, err := time.Parse(time.RFC3339, demo_date)
+		date, err := time.Parse(time.RFC3339, demoDate)
 		if err != nil {
 			panic(err)
 		}
 
 		item := &FlashBriefingItem{
-			ID:         demo_uid,
+			ID:         demoUID,
 			Date:       date,
-			Title:      demo_title,
-			Text:       demo_text,
-			AudioURL:   demo_stream,
-			DisplayURL: demo_redirection,
+			Title:      demoTitle,
+			Text:       demoText,
+			AudioURL:   demoStream,
+			DisplayURL: demoRedirection,
 		}
 
 		Convey(`And I populate a FlashBriefing with that item`, func() {
@@ -142,16 +138,14 @@ func TestServeFlashBriefing(t *testing.T) {
 							if err != nil {
 								panic(err)
 							}
-							expectedJson, err := json.Marshal(briefing)
+							marshaledJSON, err := json.Marshal(briefing)
 							if err != nil {
 								panic(err)
 							}
-							So(body, ShouldResemble, expectedJson)
+							So(body, ShouldResemble, marshaledJSON)
 						})
 					})
-
 				})
-
 			})
 		})
 	})
