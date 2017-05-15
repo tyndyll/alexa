@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -18,8 +19,8 @@ const (
 	demoText        = "Main information for the item"
 	demoStream      = "https://developer.amazon.com/public/community/blog/myaudiofile.mp3"
 	demoRedirection = "https://developer.amazon.com/public/community/blog"
-
-	demoJSON = `{"uid":"%s","updateDate":"%s","titleText":"%s","mainText":"%s","streamUrl":"%s","redirectionUrl":"%s"}`
+	demoJSON        = `{"uid":"%s","updateDate":"%s","titleText":"%s","mainText":"%s","streamUrl":"%s","redirectionUrl":"%s"}`
+	max_items       = 5
 )
 
 var expectedJSON = fmt.Sprintf(demoJSON, demoUID, demoDate, demoTitle, demoText, demoStream, demoRedirection)
@@ -149,4 +150,23 @@ func TestServeFlashBriefing(t *testing.T) {
 			})
 		})
 	})
+}
+
+func ExampleFlashBriefingHandler() {
+	items := make([]*FlashBriefingItem, max_items)
+	briefing := &FlashBriefing{
+		Items: items,
+	}
+
+	for i := 0; i < max_items; i++ {
+		briefing.Items[i] = &FlashBriefingItem{
+			ID:    fmt.Sprintf(`id-%d`, i),
+			Date:  time.Now(),
+			Title: fmt.Sprintf(`Demo Entry %d`, i),
+			Text:  fmt.Sprintf(`This is the entry for %d`, i),
+		}
+	}
+
+	http.HandleFunc(`/`, FlashBriefingHandler(briefing))
+	http.ListenAndServe(`:8080`, nil)
 }
