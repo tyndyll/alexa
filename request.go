@@ -8,9 +8,10 @@ import (
 // APIEndpointAddress is a known of base URI's for calls for device address data to the Alexa service
 type APIEndpointAddress string
 
-// AudioPlayer state indicates the last known state of audio playback
+// AudioPlayerState indicates the last known state of audio playback
 type AudioPlayerState string
 
+// ConfirmationStatusState
 type ConfirmationStatusState string
 
 // DialogState indicates the status of a multi-turn dialog.
@@ -24,6 +25,9 @@ type ResolutionStatusCode string
 
 // SessionEndedReason describes why the session ended.
 type SessionEndedReason string
+
+// SessionErrorType describes the type of error that occurred
+type SessionErrorType string
 
 // SupportedInterfaces is a supported interface as used as a key in the Device.SupportedInterfaces field
 type SupportedInterfaces string
@@ -68,14 +72,28 @@ const (
 	// utterance that did not match any of the intents defined in your voice interface
 	SessionEndedReasonUserExceededMaxReprompts SessionEndedReason = "EXCEEDED_MAX_REPROMPTS"
 
+	// SessionErrorTypeInvalidResponse indicates that the response was invalid
+	SessionErrorTypeInvalidResponse SessionErrorType = "INVALID_RESPONSE"
+	// SessionErrorTypeDeviceCommunicationError indicates that there were problems communicating with the device
+	SessionErrorTypeDeviceCommunicationError SessionErrorType = "DEVICE_COMMUNICATION_ERROR"
+	// SessionErrorTypeInternalError indicates that there was an error with Alexa
+	SessionErrorTypeInternalError SessionErrorType = "INTERNAL_ERROR"
+
 	// USAPIEndpointAddress is the base URI for US calls for device address data
 	USAPIEndpointAddress APIEndpointAddress = `https://api.amazonalexa.com/`
 	// UKDEEndpointAddress is the base URI for UK or DE calls for device address data
 	UKDEAPIEndpointAddress APIEndpointAddress = `https://api.eu.amazonalexa.com`
 
-	LaunchRequestType       RequestTypeName = `LaunchRequest`
-	IntentRequestType       RequestTypeName = `IntentRequest`
+	// LaunchRequestType indicates a request opening a skill, or which has no intents
+	LaunchRequestType RequestTypeName = `LaunchRequest`
+	// IntentRequestType indicates a request for a skill with an intent
+	IntentRequestType RequestTypeName = `IntentRequest`
+	// SessionEndedRequestType indicates a currently open session is closed
 	SessionEndedRequestType RequestTypeName = `SessionEnded`
+	// HelpRequestType is a built in request type indicating that the user has requested help
+	HelpRequestType RequestTypeName = `AMAZON.HelpIntent`
+	// StopRequestType is a build in request type indicating that the interaction is stopped
+	StopRequestType RequestTypeName = `AMAZON.StopIntent`
 )
 
 // AudioPlayer provides the current state for the AudioPlayer interface.
@@ -113,14 +131,17 @@ type BaseRequestType struct {
 	Locale string `json:"locale"`
 }
 
+// GetID returns the unique ID for the request
 func (request *BaseRequestType) GetID() string {
 	return request.ID
 }
 
+// GetTimestamp returns the supplied time for the request
 func (request *BaseRequestType) GetTimestamp() time.Time {
 	return request.Timestamp
 }
 
+// GetLocale returns the supplied locale for the request
 func (request *BaseRequestType) GetLocale() string {
 	return request.Locale
 }
@@ -222,6 +243,10 @@ func (request *IntentRequest) GetType() RequestTypeName {
 // from the user. Services that need more information from the user may need to respond with a prompt.
 //
 // A LaunchRequest always starts a new session.
+//
+// A skill can respond to LaunchRequest with any combination of:
+//   * Standard response properties (OutputSpeech, Card, and Reprompt).
+//   * Any AudioPlayer directives.
 type LaunchRequest struct {
 	*BaseRequestType
 }
@@ -409,6 +434,13 @@ type SessionEndedRequest struct {
 	Reason SessionEndedReason `json:"reason"`
 }
 
+// SessionError is object providing more information about the error that occurred.
+type SessionError struct {
+	// Type indicates the type of error that occurred
+	Type    SessionErrorType `json:"type"`
+	Message string           `json:"message"`
+}
+
 type Slot struct {
 	// Name represents the name of the slot.
 	Name string `json:"name"`
@@ -491,76 +523,10 @@ type UserPermission struct {
 }
 
 /*
-// AudioPlayerState is the state an AudioPlayer request may have
-type AudioPlayerState string
-
-type ConfirmationStatusState string
-
-type RequestType string
-
-type SessionErrorType string
-
-const (
-
-	// The following constants indicates the last known state of audio playback as detailed in the AudioPlayer
-	// ActivityState
-	//
-
-
-
-	LaunchRequestType       RequestType = `LaunchRequest`
-	IntentRequestType       RequestType = `IntentRequest`
-
-	SessionErrorTypeInvalidResponse          SessionErrorType = "INVALID_RESPONSE"
-	SessionErrorTypeDeviceCommunicationError SessionErrorType = "DEVICE_COMMUNICATION_ERROR"
-	SessionErrorTypeInternalError            SessionErrorType = "INTERNAL_ERROR"
-)
-
-
-
-
-
-
-
-func ExtractRequest(b []byte) (RequestType, error) {
-	type typeDeterminer struct {
-		Request *struct {
-			Type RequestType `json:"type"`
-		} `request`
-	}
-
-	getType := &typeDeterminer{}
-	err := json.Unmarshal(b, getType)
-	if err != nil {
-		return nil, err
-	}
-	req := &Request{}
-
-	switch getType.Request.Type {
-	case LaunchRequestType:
-		req.Request = &LaunchRequest{}
-	case IntentRequestType:
-		req.Request = &IntentRequest{}
-	case SessionEndedRequestType:
-		req.Request = &SessionEndedRequest{}
-	}
-}
-
-
-
-
 
 func (d *Device) HasAudioPlayerSupport() bool {
 	_, hasSupport := d.SupportedInterfaces[audioPlayerSupported]
 	return hasSupport
 }
 
-
-
-
-
-type SessionError struct {
-	Type    SessionErrorType `json:"type"`
-	Message string           `json:"message"`
-}
 */

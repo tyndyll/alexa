@@ -1,3 +1,21 @@
+/*
+Package alexa requires that request are verified that they are by Alexa. Requests sent to your web service are
+transmitted over the Internet. To protect your endpoint from potential attackers, your web service should verify that
+incoming requests were sent by Alexa. Any requests coming from other sources should be rejected.
+
+There are two parts to validating incoming requests:
+  * Check the request signature to verify the authenticity of the request. Alexa signs all HTTPS requests.
+
+  This is required for certifying your Alexa skill and making it available to Amazon users. Web services that accept
+  unsigned requests or fail to verify the request signature are rejected.
+
+  * Check the request timestamp to ensure that the request is not an old request being sent as part of a "replay" attack
+
+  This is required for certifying your Alexa skill and making it available to Amazon users.
+
+Further information can be found at
+https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/developing-an-alexa-skill-as-a-web-service
+*/
 package alexa
 
 import (
@@ -16,24 +34,37 @@ const (
 	// it will be rejected by the RequestVerificationMiddleware
 	TimestampVerificationTolerance time.Duration = 150000000000
 
+	// certificateChainURL is the name of the header containing the request certificate
 	certificateChainURL  = "SignatureCertChainUrl"
 	validAlternativeName = "echo-api.amazon.com"
 )
 
 // TimestampInTolerance takes a timestamp and verifies that it is valid within the bounds of the
-// TimestampVerificationTolerance
+// TimestampVerificationTolerance and it is not an old request being sent as part of a “replay” attack.
+//
+// This is required for certifying your Alexa skill and making it available to Amazon users.
 func TimestampInTolerance(timestamp time.Time) bool {
 	now := time.Now()
 	// true if timestamp less than (currentTime + Tolerance) and timestamp > (currentTime - Tolerance)
 	return timestamp.Unix() < now.Add(TimestampVerificationTolerance).Unix() && timestamp.Unix() > now.Add(-1*TimestampVerificationTolerance).Unix()
 }
 
+// VerifySignatureCertificateURL verifies the URL to ensure that it matches the format used by Amazon. This value can be
+// found specified by the SignatureCertChainUrl header value on the request
+//
+// This is required for certifying your Alexa skill and making it available to Amazon users.
 func VerifySignatureCertificateURL(certificateURL string) bool {
 	parsed, err := url.Parse(certificateURL)
 	if err != nil {
 		return false
 	}
 
+	// TODO: Collapse and normalise the URL path
+
+	// The protocol is equal to https (case insensitive).
+	// The hostname is equal to s3.amazonaws.com (case insensitive).
+	// The path starts with /echo.api/ (case sensitive).
+	// If a port is defined in the URL, the port is equal to 443.
 	if parsed.Scheme != `https` || parsed.Hostname() != `s3.amazonaws.com` ||
 		strings.Index(parsed.Path, `echo.api`) != 1 || parsed.Port() != "" && parsed.Port() != "443" {
 		return false
@@ -41,11 +72,13 @@ func VerifySignatureCertificateURL(certificateURL string) bool {
 	return true
 }
 
-func ValidateCertificate(certificateURL string) bool {
+// CheckSignature verifies the signature in the HTTP headers
+func CheckSignature(certificateURL string) (bool, error) {
+	// Download the PEM-encoded X.509 certificate chain that Alexa used to sign the message as specified by the
+	// certificateURL header value on the request.
 	certResponse, err := http.Get(certificateURL)
 	if err != nil {
-		fmt.Println("Cannot download certificate")
-		return false
+		return false, fmt.Errorf("Cannot download certificate")
 	}
 
 	certBody, err := ioutil.ReadAll(certResponse.Body)
@@ -53,26 +86,27 @@ func ValidateCertificate(certificateURL string) bool {
 		panic(err)
 	}
 
+	// TODO: Handle the unused variable
 	block, _ := pem.Decode(certBody)
-	//	if block == nil || block.Type != "PUBLIC KEY" {
-	//		log.Println("failed to decode PEM block containing public key")
-	//		return false
-	//	}
-
 	certs, err := x509.ParseCertificates(block.Bytes)
 	if err != nil {
-		fmt.Printf(err.Error())
-		return false
+		return false, err
 	}
 
 	for _, cert := range certs {
-		if err := cert.VerifyHostname(validAlternativeName); err != nil {
-			fmt.Printf("Could not validate name %s: %s", validAlternativeName, err)
-			return false
-		}
+		// TODO:
+		// The signing certificate has not expired (examine both the Not Before and Not After dates)
+		// The domain echo-api.amazon.com is present in the Subject Alternative Names (SANs) section of the signing certificate
+		// All certificates in the chain combine to create a chain of trust to a trusted root CA certificate
 
-		fmt.Printf("Cert valid not before %+v and not after %+v", cert.NotBefore, cert.NotAfter)
+		if err := cert.VerifyHostname(validAlternativeName); err != nil {
+			return false, fmt.Errorf("Could not validate name %s: %s", validAlternativeName, err)
+		}
 	}
 
-	return true
+	// Base64-decode the Signature header value on the request to obtain the encrypted signature.
+	// Use the public key extracted from the signing certificate to decrypt the encrypted signature to produce the asserted hash value.
+	// Generate a SHA-1 hash value from the full HTTPS request body to produce the derived hash value
+	// Compare the asserted hash value and derived hash values to ensure that they match.
+	return true, nil
 }

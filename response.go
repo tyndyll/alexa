@@ -7,17 +7,23 @@ import (
 type CardType string
 
 const (
-	SimpleCardType      CardType = `Simple`
-	StandardCardType    CardType = `Standard`
+	// SimpleCardType is a card that contains a title and plain text content.
+	SimpleCardType CardType = `Simple`
+	// StandardCardType is a card that contains a title, text content, and an image to display.
+	StandardCardType CardType = `Standard`
+	// LinkAccountCardType is a card that displays a link to an authorization URL that the user can use to link their
+	// Alexa account with a user in another system
 	LinkAccountCardType CardType = `LinkAccount`
 )
 
+// CardTypeDoesNotExist is an error returned when the output card has been set to an unknown CardType
 var CardTypeDoesNotExist error
 
 // OutputSpeech is an interface used to return the text to be spoken in the Response OutputSpeech and Reprompt fields.
 //
 // Types which implement this interface include PlainSpeech, a plain string containing the speech to render to the user,
 // and SSMLSpeech, a string containing text marked up with SSML to render to the user.
+//
 type OutputSpeech interface {
 	MarshalJSON() ([]byte, error)
 }
@@ -47,14 +53,32 @@ func (t SSMLSpeech) MarshalJSON() ([]byte, error) {
 	}{"SSML", string(t)})
 }
 
+// Card describes a visual interface that will be presented to the user.
+//
+// A card can only be included when sending a response to a LaunchRequest or IntentRequest. All of the text included in
+// a card cannot exceed 8000 characters. This includes the title, content, text, and image URLs.
+//
+// An image URL (smallImageUrl or largeImageUrl) cannot exceed 2000 characters.
 type Card struct {
-	Type          CardType
-	Title         string
-	Text          string
+	// Type describes the type of card to render
+	Type CardType
+
+	// Title is a string containing the title of the card.
+	Title string
+
+	// Text is a string containing the text content. Note that this field represents "content" in a SimpleCardType and
+	// "text" in  a StandardCardType
+	Text string
+
+	// LargeImageURL is a string that specifies the URLs for a large image to display on a Standard card.
 	LargeImageURL string
+
+	// SmallImageURL is a string that specifies the URLs for a small image to display on a Standard card.
 	SmallImageURL string
 }
 
+// MarshalJSON implements the json.Marshaler interface for the Card type. It selects the appropriate CardType and
+// populates the appropriate field
 func (card *Card) MarshalJSON() (data []byte, err error) {
 	switch card.Type {
 	case SimpleCardType:
@@ -94,12 +118,21 @@ func (card *Card) MarshalJSON() (data []byte, err error) {
 	return data, err
 }
 
+// Response is the object that will be returned from a user request
 type Response struct {
-	Version           string                 `json:"version"`
+	// SessionAttributes is a map of key-value pairs to persist in the session
+	// Session attributes are ignored by the Alexa service if they are included on a response to an AudioPlayer or
+	// a PlaybackController request.
 	SessionAttributes map[string]interface{} `json:"sessionAttributes"`
-	Response          *ResponseData          `json:"response"`
+
+	// Response defines what to render to the user and whether to end the current session
+	Response *ResponseData `json:"response"`
 }
 
+// MarshalJSON implements the json.Marshaler interface for the Response type. It selects the appropriate Response type
+// and populates the version field
+//
+// The total size of your response cannot exceed 24 kilobytes
 func (response *Response) MarshalJSON() (data []byte, err error) {
 	type Alias Response
 	return json.Marshal(&struct {
@@ -111,9 +144,19 @@ func (response *Response) MarshalJSON() (data []byte, err error) {
 	})
 }
 
+// ResponseData contains the content that will be presented to a user
+//
+// If you include both standard properties and an AudioPlayer directive, Alexa processes the standard properties first.
+// For example, if you provide OutputSpeech in the same response as an Play directive, Alexa speaks the provided text
+// before beginning to stream the audio.
 type ResponseData struct {
-	OutputSpeech     OutputSpeech `json:"outputSpeech,omitempty"`
-	Card             *Card        `json:"card,omintempty"`
+	// OutputSpeech contains the speech to render to the user. The OutputSpeech response cannot exceed 8000 characters.
+	OutputSpeech OutputSpeech `json:"outputSpeech,omitempty"`
+
+	// Card contains a card to render to the Amazon Alexa App. All of the text included in a card cannot exceed 8000
+	// characters. This includes the title, content, text, and image URLs.
+	Card *Card `json:"card,omintempty"`
+
 	Reprompt         OutputSpeech `json:"reprompt"`
 	ShouldEndSession bool         `json:"shouldEndSession"`
 }
