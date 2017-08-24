@@ -8,8 +8,10 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
