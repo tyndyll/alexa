@@ -162,3 +162,15 @@ type ResponseData struct {
 }
 
 type Directive struct{}
+
+
+// NewPlainSpeechResponse is a utility function that takes the Output Speech to be delivered in the response, populates
+// it in a Response and then marshals that response into JSON
+func NewPlainSpeechResponse(outputSpeech string) ([]byte, error) {
+	response := &Response{
+		Response: &ResponseData{
+			OutputSpeech: PlainSpeech(outputSpeech),
+		},
+	}
+	return json.Marshal(response)
+}
