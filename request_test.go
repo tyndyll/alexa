@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	//	"github.com/tyndyll/alexa"
-	//	"time"
 )
 
 func TestRequestUnmarshal(t *testing.T) {
@@ -100,6 +98,21 @@ func TestRequestUnmarshal(t *testing.T) {
 			So(request.Detail.GetID(), ShouldEqual, "c4763de6-1e7d-4842-99d5-29fe1836b577")
 		})
 	})
+
+	Convey(`When I unmarshal the SessionEndedRequest JSON into a Request struct`, t, func() {
+		request := &Request{}
+		if err := json.Unmarshal(sessionEndedRequestJSON, request); err != nil {
+			panic(err)
+		}
+
+		Convey(`Then the Detail type will be a SessionEndedRequest struct`, func() {
+			So(request.Detail, ShouldHaveSameTypeAs, &SessionEndedRequest{})
+		})
+
+		Convey(`Then the Detail ID will be set correctly`, func() {
+			So(request.Detail.GetID(), ShouldEqual, "amzn1.echo-api.request.65d4c1e0-1013-40fd-9312-9b7fa462e0a9")
+		})
+	})
 }
 
 var launchRequestJSON = []byte(`
@@ -167,6 +180,19 @@ var intentRequestJSON = []byte(`
 		"intent": {
 			"name": "IntentName"
 		}
+	}
+}
+`)
+
+var sessionEndedRequestJSON = []byte(`
+{
+	"version": "1.0",
+	"request": {
+		"type": "SessionEndedRequest",
+		"requestId": "amzn1.echo-api.request.65d4c1e0-1013-40fd-9312-9b7fa462e0a9",
+		"timestamp": "2017-08-29T20:48:16Z",
+		"locale": "en-GB",
+		"reason": "EXCEEDED_MAX_REPROMPTS"
 	}
 }
 `)

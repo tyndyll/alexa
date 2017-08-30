@@ -8,7 +8,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -60,13 +59,19 @@ func RequestVerificationMiddleware(next http.Handler) http.Handler {
 	// TODO: take application ID
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		body, _ := ioutil.ReadAll(req.Body)
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			http.Error(w, "Cannot read body", http.StatusBadRequest)
+			return
+		}
 		// Reset the request body
 		req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
+		fmt.Println(string(body))
 		request := &Request{}
 		if err := json.Unmarshal(body, request); err != nil {
-			panic(err)
+			http.Error(w, "err", http.StatusBadRequest)
+			return
 		}
 
 		if !TimestampInTolerance(request.Detail.GetTimestamp()) {
@@ -150,7 +155,7 @@ func ValidateCertificate(certificateURL, signature string) (bool, error) {
 	}
 
 	// TODO: Remove
-	log.Println("TOTAL NUMBER OF CERTS: ", len(certs))
+	// log.Println("TOTAL NUMBER OF CERTS: ", len(certs))
 	for _, cert := range certs {
 		// TODO:
 		// The signing certificate has not expired (examine both the Not Before and Not After dates)
@@ -165,13 +170,14 @@ func ValidateCertificate(certificateURL, signature string) (bool, error) {
 		_, err := base64.StdEncoding.DecodeString(signature)
 		if err != nil {
 			// TODO: Remove
-			log.Println("Decrypt : ", err)
+			// fg
+			// log.Println("Decrypt : ", err)
 			return false, err
 		}
 
 		// Use the public key extracted from the signing certificate to decrypt the encrypted signatureHeader to produce
 		// the asserted hash value.
-		fmt.Println("Encryption key: ", cert.PublicKeyAlgorithm)
+		// fmt.Println("Encryption key: ", cert.PublicKeyAlgorithm)
 		//publicKey := cert.PublicKey
 
 	}

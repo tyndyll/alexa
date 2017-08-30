@@ -89,7 +89,7 @@ const (
 	// IntentRequestType indicates a request for a skill with an intent
 	IntentRequestType RequestTypeName = `IntentRequest`
 	// SessionEndedRequestType indicates a currently open session is closed
-	SessionEndedRequestType RequestTypeName = `SessionEnded`
+	SessionEndedRequestType RequestTypeName = `SessionEndedRequest`
 	// HelpRequestType is a built in request type indicating that the user has requested help
 	HelpRequestType RequestTypeName = `AMAZON.HelpIntent`
 	// StopRequestType is a build in request type indicating that the interaction is stopped
@@ -322,6 +322,8 @@ func (request *Request) determineRequestType(b []byte) error {
 		request.Detail = &LaunchRequest{}
 	case IntentRequestType:
 		request.Detail = &IntentRequest{}
+	case SessionEndedRequestType:
+		request.Detail = &SessionEndedRequest{}
 	}
 
 	return json.Unmarshal(b, request.Detail)
@@ -432,6 +434,10 @@ type SessionEndedRequest struct {
 
 	// Reason describes why the session ended.
 	Reason SessionEndedReason `json:"reason"`
+}
+
+func (request *SessionEndedRequest) GetType() RequestTypeName {
+	return SessionEndedRequestType
 }
 
 // SessionError is object providing more information about the error that occurred.
