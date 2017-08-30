@@ -170,6 +170,7 @@ func NewPlainSpeechResponse(outputSpeech string) ([]byte, error) {
 	response := &Response{
 		Response: &ResponseData{
 			OutputSpeech: PlainSpeech(outputSpeech),
+			ShouldEndSession: true,
 		},
 	}
 	return json.Marshal(response)
