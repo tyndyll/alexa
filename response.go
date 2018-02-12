@@ -157,8 +157,17 @@ type ResponseData struct {
 	// characters. This includes the title, content, text, and image URLs.
 	Card *Card `json:"card,omintempty"`
 
+	// Reprompt contains the output speech that will be provided if a re-prompt is necessary. This is used if the the
+	// service keeps the session open after sending the response, but the user does not respond with anything that maps
+	// to an intent defined in your voice interface while the audio stream is open.
 	Reprompt         OutputSpeech `json:"reprompt"`
+
+	// ShouldEndSession is boolean value with true meaning that the session should end after Alexa speaks the response,
+	// or false if the session should remain active.
 	ShouldEndSession bool         `json:"shouldEndSession"`
+
+	// Directives is an array of directives specifying device-level actions to take using a particular interface
+	Directives []*string `json:"directives"`
 }
 
 type Directive struct{}

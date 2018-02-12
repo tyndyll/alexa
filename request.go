@@ -64,14 +64,6 @@ const (
 	ResolutionStatusCodeTimeout   ResolutionStatusCode = "ER_ERROR_TIMEOUT"
 	ResolutionStatusCodeException ResolutionStatusCode = "ER_ERROR_EXCEPTION"
 
-	// SessionEndedReasonUserInitiated indicates the user explicitly ended the session.
-	SessionEndedReasonUserInitiated SessionEndedReason = "USER_INITIATED"
-	// SessionEndedReasonError indicates an  error occurred that caused the session to end.
-	SessionEndedReasonError SessionEndedReason = "ERROR"
-	// SessionEndedReasonUserExceededMaxReprompts indicates the user either did not respond or responded with an
-	// utterance that did not match any of the intents defined in your voice interface
-	SessionEndedReasonUserExceededMaxReprompts SessionEndedReason = "EXCEEDED_MAX_REPROMPTS"
-
 	// SessionErrorTypeInvalidResponse indicates that the response was invalid
 	SessionErrorTypeInvalidResponse SessionErrorType = "INVALID_RESPONSE"
 	// SessionErrorTypeDeviceCommunicationError indicates that there were problems communicating with the device
@@ -95,7 +87,7 @@ const (
 	// StopRequestType is a build in request type indicating that the interaction is stopped
 	StopRequestType RequestTypeName = `AMAZON.StopIntent`
 
-	AudioPlayerRequestType = `AudioPlaterReq`
+	AudioPlayerRequestType = `AudioPlayerReq`
 )
 
 // AudioPlayer provides the current state for the AudioPlayer interface.
@@ -183,80 +175,6 @@ type Device struct {
 	SupportedInterfaces map[SupportedInterfaces]interface{}
 }
 
-type Intent struct {
-	// Name represents the name of the intent. It is set in the Alexa Developer console
-	Name string `json:"name"`
-
-	// ConfirmationStatus indicates whether the user has explicitly confirmed or denied the entire intent.
-	ConfirmationStatus ConfirmationStatusState `json:"confirmationStatus"`
-
-	// Slots is a map of key-value pairs that further describes what the user meant based on a predefined intent schema.
-	// The map can be empty.
-	Slots map[string]*Slot `json:"slots"`
-}
-
-// IntentRequest is an object that represents a request a user makes to a skill that maps to an intent. The request
-// object sent to your service includes the specific intent and any defined slot values.
-//
-// An intent represents a high-level action that fulfills a user’s spoken request. Intents can optionally have
-// arguments called slots that collect additional information needed to fulfill the user’s request.
-//
-// Note that an IntentRequest can either start a new session or continue an existing session, depending on how the user
-// begins interacting with the skill:
-//   e.g. The user asks Alexa a question or states a command, all in a single phrase. This sends a new IntentRequest
-//         and starts a new session:
-//         User: Alexa, Ask GoDoc for ResponseWriter.
-//
-// In this case, no LaunchRequest is ever sent to your service. The IntentRequest starts session instead.
-//
-// Once a session is already open, the user states a command that maps to one of the intents defined in your voice
-// interface. This sends the IntentRequest within the existing session:
-//   e.g. User: Alexa, talk to GoDoc # (This command sends the service a LaunchRequest and opens a new session)
-//        Alexa: You can ask for a function, a struct or an interface. Which will it be? (response to the LaunchRequest)
-//        User: Give me the doc for ReadAll (This command sends the service an IntentRequest with the existing,
-//                open session)
-//
-// Note that Alexa provides a collection of built-in intents for very common actions, such as stopping, canceling,
-// and providing help. If you choose to use these intents, your code for handling IntentRequest requests needs to handle
-// them as well.
-//
-// If you are using the skill builder (beta) and you have created a dialog model, the IntentRequest includes a
-// DialogState property. You can use this to determine the current status of the conversation with the user and return
-// the Dialog.Delegate directive if the conversation is not yet complete.
-type IntentRequest struct {
-	*BaseRequestType
-
-	// DialogState indicates the status of a multi-turn dialog. This property is included if the skill meets the
-	// requirements to use the Dialog directives
-	DialogState DialogState `json:"dialogState"`
-
-	// Intent represents what the action the user wants to perform
-	Intent *Intent `json:"intent"`
-}
-
-func (request *IntentRequest) GetType() RequestTypeName {
-	return IntentRequestType
-}
-
-// LaunchRequest is an object that represents a user request to an Alexa skill, where the user invokes the skill with
-// the invocation name, but does not provide any command mapping to an intent e.g. "Alexa, talk to MyGoSkill"
-//
-// For skills that just do one thing e.g. tells trivia, the service can take action without requesting more information
-// from the user. Services that need more information from the user may need to respond with a prompt.
-//
-// A LaunchRequest always starts a new session.
-//
-// A skill can respond to LaunchRequest with any combination of:
-//   * Standard response properties (OutputSpeech, Card, and Reprompt).
-//   * Any AudioPlayer directives.
-type LaunchRequest struct {
-	*BaseRequestType
-}
-
-func (request *LaunchRequest) GetType() RequestTypeName {
-	return LaunchRequestType
-}
-
 // Request is an implementation of a JSON Alexa request. The definition of the request is made by Amazon and defined in
 // the Alexa Documentation. This request will be available in the body of POST request from the Alexa service
 //
@@ -280,8 +198,7 @@ type Request struct {
 	// session.
 	Context *Context `json:"context"`
 
-	// Request provides the details of the user’s request. There are several different request types available, see:
-	// Standard Requests:
+	// Request provides the details of the user’s request. There are several different request types available
 	// * LaunchRequest
 	// * IntentRequest
 	// * SessionEndedRequest
@@ -337,8 +254,8 @@ func (request *Request) determineRequestType(b []byte) error {
 // Requests from interfaces such as AudioPlayer and PlaybackController are not sent in the context of a session, so
 // they do not include the session object.
 type RequestSession struct {
-	// New indicates whether this is a new session. True indicates a new session, False indicates an existing session.
-	New bool `json:"new"`
+	// IsNew indicates whether this is a new session. True indicates a new session, False indicates an existing session.
+	IsNew bool `json:"new"`
 
 	// ID represents a unique identifier per a user’s active session.
 	//
@@ -357,7 +274,8 @@ type RequestSession struct {
 	Attributes map[string]interface{} `json:"attributes"`
 
 	// ApplicationID represents the Application ID associated in Alexa. The skill’s application ID is displayed on the
-	// Skill Information page in the developer portal.
+	// Skill Information page in the developer portal. This information is also available in the System.Application
+	// field
 	ApplicationID string
 
 	// User describes the user making the request. This is a user from the perspective of the Alexa system
@@ -418,28 +336,6 @@ type ResolutionValue struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"value"`
-}
-
-// SessionEndedRequest is an object that represents a request made to an Alexa skill to notify that a session was ended.
-// Your service receives a SessionEndedRequest when a currently open session is closed for one of the following reasons:
-//  * The user says “exit”.
-//  * The user does not respond or says something that does not match an intent defined in your voice interface while
-// 		the device is listening for the user’s response.
-//  * An error occurs.
-//
-// NOTE: Setting the shouldEndSession flag to true in your response also ends the session. In this case, your service
-// does not receive a SessionEndedRequest.
-//
-// NOTE: Your skill cannot return a response to SessionEndedRequest.
-type SessionEndedRequest struct {
-	*BaseRequestType
-
-	// Reason describes why the session ended.
-	Reason SessionEndedReason `json:"reason"`
-}
-
-func (request *SessionEndedRequest) GetType() RequestTypeName {
-	return SessionEndedRequestType
 }
 
 // SessionError is object providing more information about the error that occurred.

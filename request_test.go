@@ -18,8 +18,8 @@ func TestRequestUnmarshal(t *testing.T) {
 			So(request.Version, ShouldEqual, `1.0`)
 		})
 
-		Convey(`Then the Session New field will be set correctly`, func() {
-			So(request.Session.New, ShouldBeTrue)
+		Convey(`Then the Session IsNew field will be set correctly`, func() {
+			So(request.Session.IsNew, ShouldBeTrue)
 		})
 
 		Convey(`Then the Session ID field will be set correctly`, func() {

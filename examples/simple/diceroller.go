@@ -1,3 +1,8 @@
+// DiceRoller is a simple custom skill that takes the number of dice and side, then generates a random number
+//
+// Dice roller is the most basic example of a simple customer Alexa skill. This example does not take advantage of the
+// NewAlexaRequestHandler function in order to demonstrate the overall code flow, but this code essentially duplicates
+// its functionality
 package main
 
 import (
@@ -7,9 +12,21 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"flag"
 
 	"github.com/tyndyll/alexa"
 )
+
+var portFlag int
+
+const (
+	launchMessage = `What dice would you like to roll`
+)
+
+func init() {
+	flag.IntVar(&portFlag, `port`, 8000, `port to listen on`)
+	flag.Parse()
+}
 
 func RollDice(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
@@ -32,7 +49,7 @@ func RollDice(w http.ResponseWriter, r *http.Request) {
 
 	switch req.Request.GetType() {
 	case alexa.LaunchRequestType:
-		response = `What dice would you like to roll`
+		response = launchMessage
 	case alexa.IntentRequestType:
 		response = fmt.Sprintf("You rolled a %d", rand.Intn(99)+1)
 	}
@@ -60,5 +77,9 @@ func main() {
 	//endpoint := alexa.RequestVerificationMiddleware(http.HandlerFunc(RollDice))
 	endpoint := http.HandlerFunc(RollDice)
 	http.Handle(`/`, endpoint)
-	http.ListenAndServe(":9000", nil)
+
+	log.Panicln(`Listening on port`, portFlag)
+	if err := http.ListenAndServe(":9000", nil); err != nil {
+		log.Panicln(`HTTP server stopped. Reason:`, err.Error())
+	}
 }
