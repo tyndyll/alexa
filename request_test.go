@@ -75,12 +75,12 @@ func TestRequestUnmarshal(t *testing.T) {
 			So(request.Context.System.APIEndpoint, ShouldEqual, `26909ef5-2c76-4929-9309-90352a425ef4`)
 		})
 
-		Convey(`Then the Detail type will be a LaunchRequest struct`, func() {
-			So(request.Detail, ShouldHaveSameTypeAs, &LaunchRequest{})
+		Convey(`Then the Request type will be a LaunchRequest struct`, func() {
+			So(request.Request, ShouldHaveSameTypeAs, &LaunchRequest{})
 		})
 
-		Convey(`Then the Detail GetID will be set correctly`, func() {
-			So(request.Detail.GetID(), ShouldEqual, "58eeabff-a19a-4fd1-87f1-7c45789769ad")
+		Convey(`Then the Request GetID will be set correctly`, func() {
+			So(request.Request.GetID(), ShouldEqual, "58eeabff-a19a-4fd1-87f1-7c45789769ad")
 		})
 	})
 
@@ -90,12 +90,12 @@ func TestRequestUnmarshal(t *testing.T) {
 			panic(err)
 		}
 
-		Convey(`Then the Detail type will be a LaunchRequest struct`, func() {
-			So(request.Detail, ShouldHaveSameTypeAs, &IntentRequest{})
+		Convey(`Then the Request type will be a LaunchRequest struct`, func() {
+			So(request.Request, ShouldHaveSameTypeAs, &IntentRequest{})
 		})
 
-		Convey(`Then the Detail ID will be set correctly`, func() {
-			So(request.Detail.GetID(), ShouldEqual, "c4763de6-1e7d-4842-99d5-29fe1836b577")
+		Convey(`Then the Request ID will be set correctly`, func() {
+			So(request.Request.GetID(), ShouldEqual, "c4763de6-1e7d-4842-99d5-29fe1836b577")
 		})
 	})
 
@@ -105,12 +105,12 @@ func TestRequestUnmarshal(t *testing.T) {
 			panic(err)
 		}
 
-		Convey(`Then the Detail type will be a SessionEndedRequest struct`, func() {
-			So(request.Detail, ShouldHaveSameTypeAs, &SessionEndedRequest{})
+		Convey(`Then the Request type will be a SessionEndedRequest struct`, func() {
+			So(request.Request, ShouldHaveSameTypeAs, &SessionEndedRequest{})
 		})
 
-		Convey(`Then the Detail ID will be set correctly`, func() {
-			So(request.Detail.GetID(), ShouldEqual, "amzn1.echo-api.request.65d4c1e0-1013-40fd-9312-9b7fa462e0a9")
+		Convey(`Then the Request ID will be set correctly`, func() {
+			So(request.Request.GetID(), ShouldEqual, "amzn1.echo-api.request.65d4c1e0-1013-40fd-9312-9b7fa462e0a9")
 		})
 	})
 }

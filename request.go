@@ -94,6 +94,8 @@ const (
 	HelpRequestType RequestTypeName = `AMAZON.HelpIntent`
 	// StopRequestType is a build in request type indicating that the interaction is stopped
 	StopRequestType RequestTypeName = `AMAZON.StopIntent`
+
+	AudioPlayerRequestType = `AudioPlaterReq`
 )
 
 // AudioPlayer provides the current state for the AudioPlayer interface.
@@ -278,7 +280,7 @@ type Request struct {
 	// session.
 	Context *Context `json:"context"`
 
-	// Detail provides the details of the user’s request. There are several different request types available, see:
+	// Request provides the details of the user’s request. There are several different request types available, see:
 	// Standard Requests:
 	// * LaunchRequest
 	// * IntentRequest
@@ -288,7 +290,7 @@ type Request struct {
 	// * Display.ElementSelected Requests
 	// * VideoApp Requests
 	// * PlaybackController Requests
-	Detail RequestType
+	Request RequestType
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface for the Request type. It extracts the Request data and
@@ -319,14 +321,14 @@ func (request *Request) determineRequestType(b []byte) error {
 
 	switch identifier.Type {
 	case LaunchRequestType:
-		request.Detail = &LaunchRequest{}
+		request.Request = &LaunchRequest{}
 	case IntentRequestType:
-		request.Detail = &IntentRequest{}
+		request.Request = &IntentRequest{}
 	case SessionEndedRequestType:
-		request.Detail = &SessionEndedRequest{}
+		request.Request = &SessionEndedRequest{}
 	}
 
-	return json.Unmarshal(b, request.Detail)
+	return json.Unmarshal(b, request.Request)
 }
 
 // RequestSession provides additional context associated with a request. Standard request types (LaunchRequest,

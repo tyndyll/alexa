@@ -30,7 +30,7 @@ func RollDice(w http.ResponseWriter, r *http.Request) {
 
 	var response string
 
-	switch req.Detail.GetType() {
+	switch req.Request.GetType() {
 	case alexa.LaunchRequestType:
 		response = `What dice would you like to roll`
 	case alexa.IntentRequestType:

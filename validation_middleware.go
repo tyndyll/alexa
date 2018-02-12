@@ -74,7 +74,7 @@ func RequestVerificationMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if !TimestampInTolerance(request.Detail.GetTimestamp()) {
+		if !TimestampInTolerance(request.Request.GetTimestamp()) {
 			http.Error(w, "Timestamp Not Recent", http.StatusBadRequest)
 			return
 		}
