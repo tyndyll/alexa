@@ -3,6 +3,9 @@ package alexa
 import "encoding/json"
 
 const (
+	AudioPlayerPlayDirective = `AudioPlayer.Play`
+	AudioPlayerStopDirective = `AudioPlayer.Stop`
+
 	// AudioPlayerPlaybackStartedType is sent when Alexa begins playing the audio stream previously sent in a Play
 	// directive. This lets your skill verify that playback began successfully.
 	AudioPlayerPlaybackStartedType = `AudioPlayer.PlaybackStarted`
@@ -17,6 +20,10 @@ const (
 	// AudioPlayerPlaybackFailedType is sent when Alexa encounters an error when attempting to play a stream.
 	AudioPlayerPlaybackFailedType = `AudioPlayer.PlaybackFailed `
 
+	ReplaceAllAudioPlayBehavior      = `REPLACE_ALL`
+	EnqueueAudioPlayBehavior         = `ENQUEUE`
+	ReplaceEnqueuedAudioPlayBehavior = `REPLACE_ENQUEUED`
+
 	PauseIntentType    = `AMAZON.PauseIntent`
 	ResumeIntentType   = `AMAZON.ResumeIntent`
 	CancelIntentType   = `AMAZON.CancelIntent`
@@ -30,6 +37,19 @@ const (
 	StartOverIntent    = `AMAZON.StartOverIntent`
 )
 
+// TODO: Need to verify this
+type PauseIntentRequest IntentRequest
+
+func (request *PauseIntentRequest) GetType() string {
+	return PauseIntentType
+}
+
+type ResumeIntentRequest IntentRequest
+
+func (request *ResumeIntentRequest) GetType() string {
+	return ResumeIntentType
+}
+
 type AudioPlayerRequest struct {
 	*BaseRequestType
 
@@ -41,24 +61,27 @@ func (request *AudioPlayerRequest) GetType() RequestTypeName {
 	return SessionEndedRequestType
 }
 
-
 type AudioDirective struct {
-	Type string `json:"type"`
-	PlayBehavior string `json:"playBehavior"`
-	AudioItem *AudioStream `json:"audioItem"`
+	Type         string       `json:"type"`
+	PlayBehavior string       `json:"playBehavior"`
+	AudioItem    *AudioStream `json:"audioItem"`
+}
+
+func (audio *AudioDirective) OfType() string {
+	return audio.Type
 }
 
 type AudioStream struct {
-	URL string `json:"url"`
-	Token string `json:"token"`
-	ExpectedPreviousToken string `json:"expectedPreviousToken"`
-	Offset int64 `json:"offsetInMilliseconds"`
+	URL                   string `json:"url"`
+	Token                 string `json:"token"`
+	ExpectedPreviousToken string `json:"expectedPreviousToken,omitempty"`
+	Offset                int64  `json:"offsetInMilliseconds"`
 }
 
 func (stream *AudioStream) MarshalJSON() ([]byte, error) {
 	type streamAlias AudioStream
 	aux := struct {
 		Stream *streamAlias `json:"stream"`
-	} { (*streamAlias)(stream) }
+	}{(*streamAlias)(stream)}
 	return json.Marshal(&aux)
 }

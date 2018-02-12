@@ -2,6 +2,7 @@ package alexa
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -243,6 +244,21 @@ func (request *Request) determineRequestType(b []byte) error {
 		request.Request = &IntentRequest{}
 	case SessionEndedRequestType:
 		request.Request = &SessionEndedRequest{}
+		// TODO: Implement AudioPlayer.PlaybackStarted
+	case PauseIntentType:
+		request.Request = &PauseIntentRequest{}
+	case ResumeIntentType:
+		request.Request = &ResumeIntentRequest{}
+		//AMAZON.LoopOffIntent
+		//AMAZON.LoopOnIntent
+		//AMAZON.NextIntent
+		//AMAZON.PreviousIntent
+		//AMAZON.RepeatIntent
+		//AMAZON.ShuffleOffIntent
+		//AMAZON.ShuffleOnIntent
+		//AMAZON.StartOverIntent
+	default:
+		return fmt.Errorf(`could not find request type: %s`, identifier.Type)
 	}
 
 	return json.Unmarshal(b, request.Request)
@@ -309,6 +325,7 @@ func (session *RequestSession) UnmarshalJSON(b []byte) error {
 //   * IntentRequest
 //   * SessionEndedRequest
 type RequestType interface {
+	// TODO: Keep? Can and should be using the .(type) syntax
 	GetType() RequestTypeName
 	GetID() string
 	GetTimestamp() time.Time
